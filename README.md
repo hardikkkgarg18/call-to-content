@@ -1,66 +1,43 @@
-# Call to Content
+# Content Engine
 
-Turn a raw sales/discovery-call transcript into a ready-to-post, founder-voiced Blog posts and linkedin posts plus the structured customer intelligence behind it.
+The content system I built to run marketing for my startup (Paygent). Two
+pipelines, one idea: turn real conversations into content, and be deliberate
+about where AI helps versus where it can quietly go wrong.
 
-I built this to automate a real problem at my startup (Paygent): The Founder does prospect
-calls all day, and turning them into content — insights, LinkedIn posts in the
-founder's voice — by hand after every call is slow, so it never happened. This
-does it in one call.
+| Pipeline | Input → Output | What it is |
+|----------|----------------|------------|
+| [**call-pipeline**](./call-pipeline) | Call transcript → founder-voiced **LinkedIn post** | A runnable **Python/FastAPI** service |
+| [**blog-pipeline**](./blog-pipeline) | Transcript + live SERP data → citation-backed **SEO/GEO blog** | A **Claude Code multi-agent** system (13 agents) |
 
-## How it works
+## Why two different shapes
 
-`POST /api/v1/analyze` runs a **7-stage pipeline**, each stage its own module in
-`pipeline/`. The key design decision is *what's AI and what isn't*:
+They solve different problems, so they're built differently — on purpose:
 
-| Stage | Module | AI? | What it does |
-|-------|--------|-----|--------------|
-| 1. Normalize | `normalizer.py` | No | Cleans messy exports (Google Meet `[Name] HH:MM`, Otter, Fireflies, `Speaker:`), strips timestamps, merges fragmented caption lines. Deterministic → plain regex. |
-| 2. Classify speakers | `speaker_classifier.py` | Yes | LLM labels each speaker `seller` vs `prospect`, then keeps **only the prospect's turns** — so the analysis is about what the customer said, not what I pitched. |
-| 3. Chunk | `chunker.py` | No | Splits long transcripts on speaker turns with a 2-turn overlap so nothing is lost at boundaries. Deterministic → plain code. |
-| 4. Extract signals | `signal_extractor.py` | Yes | Per chunk, extracts pain points (with intensity + exact quote), objections, verbatim quotes, buying signals — via structured tool-calling so output is typed, not guessed. |
-| 5. Merge | `api/routes.py` | No | Recombines per-chunk signals, dedupes quotes, averages confidence. |
-| 6. Aggregate | `insight_aggregator.py` | Yes | Lifts raw signals into market-level insight: dominant pain theme, objection pattern, top quotes, ICP signals, urgency. |
-| 7. Generate | `content_generator.py` | Yes | Writes the LinkedIn post in the founder's voice, with an explicit style guide (short paragraphs, insight-not-pitch, banned buzzwords, use the customer's exact language). |
+- **call-pipeline** is a deterministic request→response transform, so it's a
+  service: you POST a transcript, it returns a draft. It runs the moment you
+  clone it. See its [README](./call-pipeline/README.md) for the 7-stage pipeline
+  and stack.
+- **blog-pipeline** is long-form research-and-writing with human checkpoints, so
+  it's an orchestrated set of Claude Code subagents (research → brief → cited
+  draft → audit → GEO-audit). See its [README](./blog-pipeline/README.md).
 
-A second endpoint, `POST /api/v1/enrich-profile`, scrapes a founder's LinkedIn +
-company site and extracts voice/tone hints that feed stage 7, so posts sound like
-a specific person. (Optional — the core `/analyze` flow doesn't need it.)
+## The shared principle
 
-Everything flows through **Pydantic schemas** (`schemas/`) so each stage's output
-is validated and typed.
+Both pipelines split the same way: **use the LLM for judgment** (who's the
+customer, what matters, how they talk, is this claim well-sourced) and **use
+plain code or hard guardrails for anything that can be confidently wrong**
+(parsing formats, chunking, validating citations, a human picking the brief). AI
+where it's genuinely better; guardrails where it isn't.
 
-The principle throughout: **use the LLM for judgment (who's the customer, what
-matters, how they talk), use plain code for anything deterministic, and use
-tool-calling so the model returns structured data instead of prose to parse.**
+## Note on data
 
-## Stack
+The real prospect transcripts and the content produced from them are
+confidential and are **not** in this repo. call-pipeline ships a synthetic
+sample; blog-pipeline ships one synthetic transcript and the reusable agent
+system only.
 
-- **Python** + **FastAPI** (`main.py`, `api/routes.py`)
-- **OpenAI** `gpt-4o-mini` with function/tool-calling for structured extraction
-- **Pydantic v2** for typed schemas
-- **httpx** + [Jina.ai reader](https://jina.ai) for website fetching; `linkedin-api` (optional) for profiles
-- Single-page **HTML** frontend (`index.html`)
+## Built with
 
-## Run it
-
-Requires Python 3.10+.
-
-```bash
-pip install -r requirements.txt
-
-cp .env.example .env        # add your OpenAI key
-uvicorn main:app --reload --port 8001
-
-# In another terminal — sends a real sample transcript through /analyze:
-python test_pipeline.py
-```
-
-Or open `index.html` in a browser to use the UI against the running server.
-
-Interactive API docs: http://localhost:8001/docs
-
-## Note on AI use
-
-Built with Claude as a coding tool. The judgment that matters — deciding which
-stages should be AI and which shouldn't, and keeping the model from inventing
-signals that aren't in the transcript — is the part a model won't make for you.
+Claude as a coding/authoring tool throughout. The architecture decisions — which
+stages are AI, where the guardrails go, how each pipeline is shaped — are the
+part a model won't make for you.
