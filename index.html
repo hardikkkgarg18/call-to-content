@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Call Intelligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f4f5;
+      color: #111827;
+      min-height: 100vh;
+      font-size: 14px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 0 40px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: #16a34a; flex-shrink: 0; }
+    .logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.4px; color: #111827; }
+    .logo-sub { font-size: 13px; color: #9ca3af; margin-left: 4px; }
+    .header-right { margin-left: auto; font-size: 12px; color: #9ca3af; }
+
+    /* ── Layout ── */
+    .page { max-width: 1080px; margin: 0 auto; padding: 32px 40px 80px; }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .card + .card { margin-top: 12px; }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin-bottom: 14px;
+    }
+
+    /* ── Founder Profile Card ── */
+    .profile-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .profile-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      gap: 10px;
+    }
+    .profile-header:hover { background: #fafafa; }
+    .profile-header-text { font-size: 13px; font-weight: 600; color: #374151; }
+    .profile-header-sub { font-size: 12px; color: #9ca3af; margin-left: 6px; }
+    .chevron { margin-left: auto; color: #9ca3af; font-size: 11px; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+
+    .profile-body { display: none; padding: 0 20px 20px; border-top: 1px solid #f3f4f6; }
+    .profile-body.open { display: block; }
+
+    .profile-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 14px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-size: 11px; font-weight: 600; color: #6b7280; letter-spacing: 0.4px; text-transform: uppercase; }
+    .field input {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      color: #111827;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus {
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+      background: #fff;
+    }
+    .field input::placeholder { color: #d1d5db; }
+
+    .extract-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+    .btn-extract {
+      background: #111827;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn-extract:hover { opacity: 0.85; }
+    .btn-extract:disabled { opacity: 0.4; cursor: not-allowed; }
+    .extract-status { font-size: 12px; color: #6b7280; }
+    .extract-status.ok { color: #16a34a; }
+    .extract-status.err { color: #dc2626; }
+
+    .extracted-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+    .pill {
+      font-size: 12px;
+      background: #f3f4f6;
+      color: #374151;
+      border-radius: 20px;
+      padding: 5px 12px;
+      max-width: 360px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border: 1px solid #e5e7eb;
+    }
+    .pill.green { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .pill.gray  { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+
+    /* ── Input Area ── */
+    .input-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 12px;
+    }
+    .input-card textarea {
+      width: 100%;
+      height: 200px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      color: #111827;
+      font-size: 13px;
+      line-height: 1.65;
+      padding: 14px;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-card textarea:focus {
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.06);
+      background: #fff;
+    }
+    .input-card textarea::placeholder { color: #d1d5db; }
+
+    .input-footer { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .input-footer input {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      color: #111827;
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      font-family: inherit;
+      flex: 1;
+      transition: border-color 0.15s;
+    }
+    .input-footer input:focus { border-color: #111827; background: #fff; }
+    .input-footer input::placeholder { color: #d1d5db; }
+
+    .btn-analyze {
+      background: #111827;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn-analyze:hover { opacity: 0.85; }
+    .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .status { min-height: 20px; font-size: 13px; color: #9ca3af; margin: 10px 0 20px; }
+    .status.loading { color: #6b7280; }
+    .status.error   { color: #dc2626; }
+    .status.done    { color: #16a34a; }
+
+    /* ── Results ── */
+    .results { display: none; }
+    .results.visible { display: block; }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #9ca3af;
+      margin: 28px 0 12px;
+    }
+
+    /* Speaker roles */
+    .speaker-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .speaker-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+    .speaker-chip.prospect { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+    .speaker-chip.seller   { background: #f9fafb; color: #6b7280; border-color: #e5e7eb; }
+    .speaker-chip .role    { font-weight: 400; opacity: 0.8; }
+
+    /* Meta bar */
+    .meta-bar {
+      display: flex;
+      gap: 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .meta-stat {
+      flex: 1;
+      padding: 16px 20px;
+      border-right: 1px solid #f3f4f6;
+    }
+    .meta-stat:last-child { border-right: none; }
+    .meta-stat-label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.6px; }
+    .meta-stat-value { font-size: 24px; font-weight: 700; color: #111827; margin-top: 4px; line-height: 1; }
+    .urgency-bar { height: 3px; background: #f3f4f6; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+    .urgency-fill { height: 100%; background: #16a34a; border-radius: 2px; transition: width 0.6s ease; }
+
+    /* Grid layouts */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+    /* Pain points / signals */
+    .signal-item {
+      padding: 12px 0;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .signal-item:last-child { border-bottom: none; }
+    .signal-desc { font-size: 13px; line-height: 1.55; color: #111827; }
+    .signal-quote {
+      font-size: 12px;
+      color: #6b7280;
+      font-style: italic;
+      margin-top: 5px;
+      line-height: 1.5;
+    }
+    .signal-quote::before { content: '"'; }
+    .signal-quote::after  { content: '"'; }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+    .badge-high     { background: #fef2f2; color: #dc2626; }
+    .badge-medium   { background: #fff7ed; color: #ea580c; }
+    .badge-low      { background: #f0fdf4; color: #16a34a; }
+    .badge-strong   { background: #f0fdf4; color: #16a34a; }
+    .badge-moderate { background: #eff6ff; color: #2563eb; }
+    .badge-weak     { background: #f9fafb; color: #6b7280; }
+
+    /* Quotes */
+    .quote-item {
+      font-size: 13px;
+      color: #374151;
+      font-style: italic;
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+      line-height: 1.55;
+    }
+    .quote-item::before { content: '"'; color: #9ca3af; }
+    .quote-item::after  { content: '"'; color: #9ca3af; }
+    .quote-item:last-child { border-bottom: none; }
+
+    /* Insight items */
+    .insight-item { padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-text { font-size: 13px; color: #111827; line-height: 1.55; margin-bottom: 8px; }
+    .insight-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .insight-tag {
+      font-size: 11px;
+      background: #f3f4f6;
+      color: #6b7280;
+      border-radius: 4px;
+      padding: 3px 8px;
+      line-height: 1.4;
+    }
+
+    /* ICP tags */
+    .icp-tag {
+      display: inline-block;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin: 4px 4px 4px 0;
+      border: 1px solid #bfdbfe;
+    }
+
+    /* LinkedIn card */
+    .linkedin-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 12px;
+    }
+    .linkedin-post {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #374151;
+      white-space: pre-wrap;
+      margin-top: 12px;
+    }
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .copy-btn:hover { background: #e5e7eb; }
+
+    /* Phrase items */
+    .phrase-item {
+      font-size: 13px;
+      color: #374151;
+      padding: 9px 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      font-style: italic;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .phrase-item::before { content: '"'; color: #9ca3af; }
+    .phrase-item::after  { content: '"'; color: #9ca3af; }
+
+    .empty { color: #d1d5db; font-size: 13px; font-style: italic; }
+
+    .divider { border: none; border-top: 1px solid #f3f4f6; margin: 28px 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo-dot"></div>
+  <span class="logo-text">Call Intelligence</span>
+  <span class="logo-sub">— signal extraction</span>
+  <span class="header-right">Ctrl+Enter to analyze</span>
+</header>
+
+<div class="page">
+
+  <!-- Founder Profile -->
+  <div class="profile-card">
+    <div class="profile-header" onclick="toggleProfile()">
+      <span class="logo-dot" style="background:#374151"></span>
+      <span class="profile-header-text">Founder Profile</span>
+      <span class="profile-header-sub">— personalizes content to sound like you</span>
+      <span class="chevron" id="chevron">▼</span>
+    </div>
+    <div class="profile-body" id="profile-body">
+      <div class="profile-row">
+        <div class="field">
+          <label class="field-label">Your Name</label>
+          <input id="p-name" type="text" placeholder="Aditya Sonkar" />
+        </div>
+        <div class="field">
+          <label class="field-label">LinkedIn URL</label>
+          <input id="p-linkedin" type="url" placeholder="https://linkedin.com/in/yourname" />
+        </div>
+        <div class="field">
+          <label class="field-label">Company Website</label>
+          <input id="p-company" type="url" placeholder="https://yourcompany.com  (optional)" />
+        </div>
+      </div>
+      <div class="extract-row">
+        <button class="btn-extract" id="btn-extract" onclick="extractProfile()">Extract from links</button>
+        <span class="extract-status" id="extract-status"></span>
+      </div>
+      <div class="extracted-pills" id="extracted-pills"></div>
+    </div>
+  </div>
+
+  <!-- Transcript Input -->
+  <div class="input-card">
+    <textarea id="transcript" placeholder="Paste your call transcript here — supports [Speaker Name] HH:MM format from Google Meet exports..."></textarea>
+    <div class="input-footer">
+      <input id="title" type="text" placeholder="Call title (optional)" />
+      <button class="btn-analyze" id="btn-analyze" onclick="analyze()">Analyze Call</button>
+    </div>
+  </div>
+
+  <div class="status" id="status"></div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+
+    <div class="section-label">Speaker Roles</div>
+    <div class="speaker-row" id="speaker-roles"></div>
+
+    <div class="meta-bar" id="meta-bar"></div>
+
+    <div class="section-label">Signals — Prospects Only</div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Pain Points</div>
+        <div id="pain-points"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Objections</div>
+        <div id="objections"></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Customer Quotes</div>
+        <div id="quotes"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Buying Signals</div>
+        <div id="buying-signals"></div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section-label">Market Insights</div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="card">
+        <div class="card-title">Primary Pain Theme</div>
+        <div id="pain-theme" style="font-size:14px;line-height:1.6;color:#111827;margin-top:4px"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Key Objection Pattern</div>
+        <div id="objection-pattern" style="font-size:14px;line-height:1.6;color:#111827;margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Synthesized Insights</div>
+      <div id="market-insights"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">ICP Signals</div>
+      <div id="icp-signals" style="margin-top:6px"></div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section-label">Generated Content</div>
+    <div class="linkedin-card">
+      <div class="card-title">LinkedIn Draft</div>
+      <div class="linkedin-post" id="linkedin-post"></div>
+      <button class="copy-btn" onclick="copyPost()">Copy post</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Key Phrases for Copy</div>
+      <div id="copy-phrases" style="margin-top:10px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8001/api/v1';
+
+let enrichedProfile = null;
+
+// ── Profile toggle ──
+function toggleProfile() {
+  const body = document.getElementById('profile-body');
+  const chevron = document.getElementById('chevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+// ── Extract profile from URLs ──
+async function extractProfile() {
+  const name = document.getElementById('p-name').value.trim();
+  const linkedin = document.getElementById('p-linkedin').value.trim();
+  const company = document.getElementById('p-company').value.trim();
+
+  if (!name) { setExtractStatus('Enter your name first', 'err'); return; }
+  if (!linkedin && !company) { setExtractStatus('Add at least one URL', 'err'); return; }
+
+  const btn = document.getElementById('btn-extract');
+  btn.disabled = true;
+  setExtractStatus('Fetching…', '');
+  document.getElementById('extracted-pills').innerHTML = '';
+
+  try {
+    const res = await fetch(`${API}/enrich-profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, linkedin_url: linkedin || null, company_url: company || null }),
+    });
+    if (!res.ok) throw new Error('Failed to enrich profile');
+    const data = await res.json();
+
+    enrichedProfile = { name, linkedin_url: linkedin || null, company_url: company || null, ...data };
+
+    const pills = document.getElementById('extracted-pills');
+    const sources = [];
+    if (data.linkedin_fetched) sources.push('<span class="pill green">✓ LinkedIn extracted</span>');
+    else if (linkedin) sources.push('<span class="pill gray">LinkedIn blocked (login wall)</span>');
+    if (data.company_fetched) sources.push('<span class="pill green">✓ Website extracted</span>');
+    else if (company) sources.push('<span class="pill gray">Website unavailable</span>');
+
+    if (data.founder_summary) sources.push(`<span class="pill" title="${data.founder_summary}">${data.founder_summary.slice(0, 60)}…</span>`);
+    if (data.company_summary) sources.push(`<span class="pill" title="${data.company_summary}">${data.company_summary.slice(0, 60)}…</span>`);
+
+    pills.innerHTML = sources.join('');
+    setExtractStatus('Profile ready', 'ok');
+  } catch (e) {
+    setExtractStatus(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setExtractStatus(msg, type) {
+  const el = document.getElementById('extract-status');
+  el.textContent = msg;
+  el.className = 'extract-status' + (type ? ' ' + type : '');
+}
+
+// ── Analyze ──
+async function analyze() {
+  const transcript = document.getElementById('transcript').value.trim();
+  const title = document.getElementById('title').value.trim();
+  if (!transcript) return;
+
+  // Build profile from enriched data or just name
+  const name = document.getElementById('p-name').value.trim();
+  let profile = null;
+  if (enrichedProfile && enrichedProfile.name === name) {
+    profile = enrichedProfile;
+  } else if (name) {
+    profile = { name };
+  }
+
+  const btn = document.getElementById('btn-analyze');
+  const status = document.getElementById('status');
+  btn.disabled = true;
+  status.className = 'status loading';
+  status.textContent = 'Analyzing — classifying speakers, extracting signals…';
+  document.getElementById('results').classList.remove('visible');
+
+  try {
+    const res = await fetch(`${API}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript, title: title || undefined, founder_profile: profile }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Error ${res.status}`);
+    }
+    const data = await res.json();
+    render(data);
+    status.className = 'status done';
+    status.textContent = `Done in ${(data.processing_time_ms / 1000).toFixed(1)}s`;
+    document.getElementById('results').classList.add('visible');
+  } catch (e) {
+    status.className = 'status error';
+    status.textContent = e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Render results ──
+function badge(level) {
+  return `<span class="badge badge-${level}">${level}</span>`;
+}
+
+function render(data) {
+  const { signals, insights, content } = data;
+
+  // Speaker roles
+  const rolesEl = document.getElementById('speaker-roles');
+  if (data.speaker_roles && Object.keys(data.speaker_roles).length) {
+    rolesEl.innerHTML = Object.entries(data.speaker_roles)
+      .map(([name, role]) => `<span class="speaker-chip ${role}">${name} <span class="role">${role}</span></span>`)
+      .join('');
+  } else {
+    rolesEl.innerHTML = '<span class="empty">No speaker labels detected</span>';
+  }
+
+  // Meta bar
+  document.getElementById('meta-bar').innerHTML = `
+    <div class="meta-stat">
+      <div class="meta-stat-label">Pain Points</div>
+      <div class="meta-stat-value">${signals.pain_points.length}</div>
+    </div>
+    <div class="meta-stat">
+      <div class="meta-stat-label">Objections</div>
+      <div class="meta-stat-value">${signals.objections.length}</div>
+    </div>
+    <div class="meta-stat">
+      <div class="meta-stat-label">Quotes</div>
+      <div class="meta-stat-value">${signals.quotes.length}</div>
+    </div>
+    <div class="meta-stat">
+      <div class="meta-stat-label">Buying Signals</div>
+      <div class="meta-stat-value">${signals.buying_signals.length}</div>
+    </div>
+    <div class="meta-stat">
+      <div class="meta-stat-label">Urgency</div>
+      <div class="meta-stat-value">${Math.round(insights.urgency_score * 100)}%</div>
+      <div class="urgency-bar"><div class="urgency-fill" style="width:${insights.urgency_score * 100}%"></div></div>
+    </div>
+    <div class="meta-stat">
+      <div class="meta-stat-label">Confidence</div>
+      <div class="meta-stat-value">${Math.round(signals.confidence_score * 100)}%</div>
+    </div>
+  `;
+
+  // Pain points
+  document.getElementById('pain-points').innerHTML = signals.pain_points.length
+    ? signals.pain_points.map(p => `
+        <div class="signal-item">
+          ${badge(p.intensity)}
+          <div class="signal-desc">${p.description}</div>
+          ${p.exact_quote ? `<div class="signal-quote">${p.exact_quote}</div>` : ''}
+        </div>`).join('')
+    : '<div class="empty">None detected</div>';
+
+  // Objections
+  document.getElementById('objections').innerHTML = signals.objections.length
+    ? signals.objections.map(o => `
+        <div class="signal-item">
+          <div class="signal-desc">${o.objection}</div>
+          <div class="signal-quote">${o.context}</div>
+        </div>`).join('')
+    : '<div class="empty">None detected</div>';
+
+  // Quotes
+  document.getElementById('quotes').innerHTML = signals.quotes.length
+    ? signals.quotes.map(q => `<div class="quote-item">${q}</div>`).join('')
+    : '<div class="empty">None detected</div>';
+
+  // Buying signals
+  document.getElementById('buying-signals').innerHTML = signals.buying_signals.length
+    ? signals.buying_signals.map(b => `
+        <div class="signal-item">
+          ${badge(b.strength)}
+          <div class="signal-desc">${b.signal}</div>
+        </div>`).join('')
+    : '<div class="empty">None detected</div>';
+
+  // Insights
+  document.getElementById('pain-theme').textContent = insights.primary_pain_theme;
+  document.getElementById('objection-pattern').innerHTML = insights.key_objection_pattern
+    || '<span class="empty">None detected</span>';
+
+  document.getElementById('market-insights').innerHTML = insights.market_insights.length
+    ? insights.market_insights.map(m => `
+        <div class="insight-item">
+          <div class="insight-text">${m.insight}</div>
+          <div class="insight-tags">${m.supporting_signals.map(s => `<span class="insight-tag">${s}</span>`).join('')}</div>
+        </div>`).join('')
+    : '<div class="empty">None</div>';
+
+  document.getElementById('icp-signals').innerHTML = insights.icp_signals.length
+    ? insights.icp_signals.map(s => `<span class="icp-tag">${s}</span>`).join('')
+    : '<div class="empty">None detected</div>';
+
+  // LinkedIn
+  document.getElementById('linkedin-post').textContent = content.linkedin_draft.full_post;
+
+  // Key phrases
+  document.getElementById('copy-phrases').innerHTML = content.key_phrases_for_copy.length
+    ? content.key_phrases_for_copy.map(p => `<div class="phrase-item">${p}</div>`).join('')
+    : '<div class="empty">None extracted</div>';
+}
+
+function copyPost() {
+  const text = document.getElementById('linkedin-post').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy post', 2000);
+  });
+}
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') analyze();
+});
+</script>
+</body>
+</html>
