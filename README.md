@@ -1,9 +1,8 @@
 # Call to Content
 
-Turn a raw sales/discovery-call transcript into a ready-to-post, founder-voiced
-LinkedIn draft — plus the structured customer intelligence behind it.
+Turn a raw sales/discovery-call transcript into a ready-to-post, founder-voiced Blog posts and linkedin posts plus the structured customer intelligence behind it.
 
-I built this to automate a real problem at my startup (Paygent): I do prospect
+I built this to automate a real problem at my startup (Paygent): The Founder does prospect
 calls all day, and turning them into content — insights, LinkedIn posts in the
 founder's voice — by hand after every call is slow, so it never happened. This
 does it in one call.
